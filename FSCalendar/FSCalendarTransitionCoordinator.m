@@ -139,6 +139,9 @@
         CGFloat progress = translation/maxTranslation;
         progress;
     });
+    if (isnan(progress)) {
+        return;
+    }
     [self performAlphaAnimationWithProgress:progress];
     [self performPathAnimationWithProgress:progress];
 }
@@ -336,6 +339,7 @@
         if (self.calendar.delegate && ([self.calendar.delegate respondsToSelector:@selector(calendar:boundingRectWillChange:animated:)])) {
             [UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
                 [self performAlphaAnimationWithProgress:toProgress];
+                if (self.transitionAttributes.focusedDate == nil) {return;}
                 self.collectionView.fs_top = [self calculateOffsetForProgress:toProgress];
                 [self boundingRectWillChange:attr.targetBounds animated:YES];
             } completion:^(BOOL finished) {
@@ -368,8 +372,10 @@
     CGFloat sourceHeight = CGRectGetHeight(self.transitionAttributes.sourceBounds);
     CGFloat currentHeight = sourceHeight - (sourceHeight-targetHeight)*progress;
     CGRect currentBounds = CGRectMake(0, 0, CGRectGetWidth(self.transitionAttributes.targetBounds), currentHeight);
-    self.collectionView.fs_top = [self calculateOffsetForProgress:progress];
-    [self boundingRectWillChange:currentBounds animated:NO];
+    if (self.transitionAttributes.focusedDate != nil) {
+        self.collectionView.fs_top = [self calculateOffsetForProgress:progress];
+        [self boundingRectWillChange:currentBounds animated:NO];
+    }
     if (self.transitionAttributes.targetScope == FSCalendarScopeMonth) {
         self.calendar.contentView.fs_height = targetHeight;
     }
@@ -398,7 +404,7 @@
     [self.calendar.calendarHeaderView reloadData];
     [self.calendar layoutIfNeeded];
     [CATransaction commit];
-    
+    if (self.transitionAttributes.focusedDate == nil) {return;}
     self.collectionView.fs_top = [self calculateOffsetForProgress:0];
 }
 
